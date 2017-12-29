@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+	
+	<context:component-scan base-package="it.pkg"/>
+
+	<!--<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">-->
+		<!--<property name="locations">-->
+			<!--<list>-->
+				<!--<value>classpath*:props/http.properties</value>-->
+				<!--<value>classpath*:props/jdbc.properties</value>-->
+				<!--<value>classpath*:props/redis.properties</value>-->
+			<!--</list>-->
+		<!--</property>-->
+	<!--</bean>-->
+
+	<context:property-placeholder location="classpath*:props/http.properties" ignore-unresolvable="true"/>
+	<context:property-placeholder location="classpath*:props/jdbc.properties" ignore-unresolvable="true"/>
+	<context:property-placeholder location="classpath*:props/redis.properties" ignore-unresolvable="true"/>
+
+	<import resource="classpath*:spring/spring-datasource.xml" />
+	<import resource="classpath*:spring/spring-redis.xml"/>
+	<import resource="classpath*:spring/spring-mybatis.xml" />
+	<import resource="classpath*:spring/spring-hibernate.xml"/>
+	<import resource="classpath*:spring/spring-aop.xml"/>
+	<import resource="classpath*:spring/spring-log.xml"/>
+
+</beans>

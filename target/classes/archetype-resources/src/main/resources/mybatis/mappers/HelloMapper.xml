@@ -1,0 +1,23 @@
+#set( $symbol_pound = '#' )
+#set( $symbol_dollar = '$' )
+#set( $symbol_escape = '\' )
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--指定映射所在的命名空间-->
+<mapper namespace="${package}.dao.HelloDao">
+
+	<resultMap id="BaseResultMap" type="${package}.model.bo.Hello">
+		<id column="user_id" property="id" jdbcType="INTEGER" />
+	</resultMap>
+
+	<select id="getHello" resultMap="BaseResultMap"
+		parameterType="String">
+		SELECT
+		user_id
+		FROM
+		t_user limit 0,1
+	</select>
+
+</mapper>
