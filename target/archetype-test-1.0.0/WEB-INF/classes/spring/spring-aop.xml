@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+    <!-- 启用AspectJ对Annotation的支持 -->
+    <aop:aspectj-autoproxy/>
+    <!--spring aop schema 配置-->
+    <aop:config proxy-target-class="true">
+        <!-- 定义公共的切入点表达式 -->
+        <aop:pointcut expression="execution(* com.song.samples.archetype.service.*.*(..)) and @annotation(com.song.samples.archetype.aop.annot.HelloAnnotation)" id="pointCutCommon"/>
+        <!-- 定义切面，命名为 adviceRespect 优先级是2 ref：表示对谁进行增强处理-->
+        <aop:aspect id = "adviceRespect" ref = "inter" order="1">
+            <aop:before pointcut-ref="pointCutCommon" method="checkMessage"/>
+            <aop:after-returning pointcut-ref="pointCutCommon" method="checkReturn" returning="obj"/>
+            <aop:around pointcut-ref="pointCutCommon" method="checkAround"/>
+            <aop:after pointcut-ref="pointCutCommon" method="checkAfter"/>
+        </aop:aspect>
+        <aop:aspect id = "firstExecute" ref = "inter" order = "2">
+            <aop:after-throwing pointcut-ref="pointCutCommon" method="checkAfterThrowing" throwing="ex"/>
+        </aop:aspect>
+    </aop:config>
+
+    <bean id="inter" class="com.song.samples.archetype.aop.aspect.HelloAdvice"/>
+    <bean id="helloWorldService" class="com.song.samples.archetype.service.impl.HelloWorldServiceImpl"/>
+
+</beans>

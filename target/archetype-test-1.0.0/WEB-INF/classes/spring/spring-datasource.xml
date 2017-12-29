@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx/spring-tx-3.1.xsd">
+
+	<!-- Local DataSource that works in any environment -->
+
+	<!-- 动态数据源的父类,其中配置的参数为子数据库的default值 -->
+    <bean id="parentDataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init"
+          destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="filters" value="${jdbc.filters}"/>
+        <property name="maxActive" value="40"/>
+        <property name="initialSize" value="${jdbc.initialSize}"/>
+        <property name="maxWait" value="${jdbc.maxWait}"/>
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+        <property name="timeBetweenEvictionRunsMillis" value="${jdbc.timeBetweenEvictionRunsMillis}"/>
+        <property name="minEvictableIdleTimeMillis" value="${jdbc.minEvictableIdleTimeMillis}"/>
+        <property name="validationQuery" value="${jdbc.validationQuery}"/>
+        <property name="testWhileIdle" value="${jdbc.testWhileIdle}"/>
+        <property name="testOnBorrow" value="${jdbc.testOnBorrow}"/>
+        <property name="testOnReturn" value="${jdbc.testOnReturn}"/>
+        <property name="useGlobalDataSourceStat" value="true"/>
+    </bean>
+
+    <!-- 子数据源,只读数据源热read01,只需对url,user,password重新赋值 -->
+    <bean id="read01" destroy-method="close" parent="parentDataSource">
+        <property name="url" value="${jdbc.read.db01.url}"/>
+        <property name="username" value="${jdbc.read.username}"/>
+        <property name="password" value="${jdbc.read.password}"/>
+    </bean>
+
+    <bean id="read02" destroy-method="close" parent="parentDataSource">
+        <property name="url" value="${jdbc.read.db02.url}"/>
+        <property name="username" value="${jdbc.read.username}"/>
+        <property name="password" value="${jdbc.read.password}"/>
+    </bean>
+
+    <!-- 子数据源,写操作主库,无需修改配置参数 -->
+    <bean id="write" parent="parentDataSource"/>
+
+    <!-- 动态数据源 -->
+    <bean id="dataSource"
+          class="com.song.common.datasoure.DynamicDataSource">
+        <property name="targetDataSources">
+            <map key-type="java.lang.String">
+                <entry key="write" value-ref="write"/>
+                <entry key="read01" value-ref="read01"/>
+                <entry key="read02" value-ref="read02"/>
+            </map>
+        </property>
+        <property name="defaultTargetDataSource" ref="write"/>
+    </bean>
+
+    <!-- 读写管理 -->
+    <bean id="dynamicDataSourceKey"
+          class="com.song.common.datasoure.DynamicDataSourceKey">
+        <property name="readDataSourceMap">
+            <map key-type="java.lang.String">
+                <entry key="read01" value="read01"/>
+                <entry key="read02" value="read02"/>
+            </map>
+        </property>
+        <property name="writeDataSource" value="write"/>
+    </bean>
+
+    <!-- 动态数据源拦截器 -->
+    <bean id="dynamicDataSourceInterceptor"
+          class="com.song.common.datasoure.DynamicDataSourceInterceptor">
+        <property name="attributes">
+            <map key-type="java.lang.String">
+                <entry key="query*" value="read"/>
+                <entry key="is*" value="read"/>
+                <entry key="get*" value="read"/>
+                <entry key="*" value="write"/>
+            </map>
+        </property>
+        <property name="dataSourceKey" ref="dynamicDataSourceKey"/>
+    </bean>
+
+    <!-- 根据Name匹配拦截器 -->
+    <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+        <property name="proxyTargetClass" value="false"/>
+        <property name="beanNames">
+            <list>
+                <value>*Service</value>
+                <value>*ServiceImpl</value>
+            </list>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <!-- 指定获取数据源的Interceptor -->
+                <value>dynamicDataSourceInterceptor</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--事务管理-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+          p:dataSource-ref="dataSource"/>
+
+    <tx:annotation-driven/>
+
+</beans>
